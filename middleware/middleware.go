@@ -2,9 +2,9 @@ package middleware
 
 import (
 	"fmt"
-	"os"
 	"time"
 
+	"github.com/faridlan/auth-go/helper"
 	jwtconfig "github.com/faridlan/auth-go/helper/jwt_config"
 	"github.com/gofiber/fiber/v2"
 )
@@ -23,7 +23,11 @@ func AuthMiddleware(ctx *fiber.Ctx) error {
 	}
 
 	tokenBearer := authorization[7:]
-	path := os.Getenv("PRIVATE_KEY")
+	config, err := helper.GetEnv()
+	if err != nil {
+		panic(err)
+	}
+	path := config.GetString("PRIVATE_KEY")
 
 	privateKey, err := jwtconfig.LoadPrivateKey(path)
 	if err != nil {

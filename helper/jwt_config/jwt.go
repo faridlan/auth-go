@@ -11,7 +11,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/faridlan/auth-go/model"
+	"github.com/faridlan/auth-go/helper"
+	"github.com/faridlan/auth-go/model/web"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -34,11 +35,15 @@ func LoadPrivateKey(filePath string) (*ecdsa.PrivateKey, error) {
 	return privateKey, nil
 }
 
-func GenerateJWT(claim *model.Claim) (string, error) {
+func GenerateJWT(claim *web.Claim) (string, error) {
 
 	claim.ExpiresAt = jwt.NewNumericDate(time.Now().Add(time.Minute * 10))
 
-	path := os.Getenv("PRIVATE_KEY")
+	config, err := helper.GetEnv()
+	if err != nil {
+		panic(err)
+	}
+	path := config.GetString("PRIVATE_KEY")
 	privateKey, err := LoadPrivateKey(path)
 	if err != nil {
 		return "", err
@@ -49,9 +54,9 @@ func GenerateJWT(claim *model.Claim) (string, error) {
 
 }
 
-func VerifyToken(tokenString string, publicKey *ecdsa.PublicKey) (*model.Claim, *jwt.Token, error) {
+func VerifyToken(tokenString string, publicKey *ecdsa.PublicKey) (*web.Claim, *jwt.Token, error) {
 
-	token, err := jwt.ParseWithClaims(tokenString, &model.Claim{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &web.Claim{}, func(token *jwt.Token) (interface{}, error) {
 		// Check if the signing method is ES256.
 		if _, ok := token.Method.(*jwt.SigningMethodECDSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -65,7 +70,7 @@ func VerifyToken(tokenString string, publicKey *ecdsa.PublicKey) (*model.Claim, 
 		return nil, nil, err
 	}
 
-	if claims, ok := token.Claims.(*model.Claim); ok && token.Valid {
+	if claims, ok := token.Claims.(*web.Claim); ok && token.Valid {
 		return claims, token, nil
 	}
 

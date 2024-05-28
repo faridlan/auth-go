@@ -6,15 +6,16 @@ import (
 
 	"github.com/faridlan/auth-go/helper"
 	jwtconfig "github.com/faridlan/auth-go/helper/jwt_config"
-	"github.com/faridlan/auth-go/model"
+	"github.com/faridlan/auth-go/model/domain"
+	"github.com/faridlan/auth-go/model/web"
 	"github.com/faridlan/auth-go/repo"
 	"gorm.io/gorm"
 )
 
 type UserService interface {
-	Register(ctx context.Context, request *model.UserCreate) (*model.UserResponse, error)
-	Login(ctx context.Context, request *model.UserLogin) (*model.UserResponseLogin, error)
-	FindAll(ctx context.Context) ([]*model.UserResponse, error)
+	Register(ctx context.Context, request *web.UserCreate) (*web.UserResponse, error)
+	Login(ctx context.Context, request *web.UserCreate) (*web.UserResponseLogin, error)
+	FindAll(ctx context.Context) ([]*web.UserResponse, error)
 }
 
 type UserServiceImpl struct {
@@ -29,19 +30,19 @@ func NewUserService(userRepo repo.UserRepo, db *gorm.DB) UserService {
 	}
 }
 
-func (service *UserServiceImpl) Register(ctx context.Context, request *model.UserCreate) (*model.UserResponse, error) {
+func (service *UserServiceImpl) Register(ctx context.Context, request *web.UserCreate) (*web.UserResponse, error) {
 
 	passwordHash, err := helper.HashPassword(request.Password)
 	if err != nil {
 		return nil, err
 	}
 
-	user := model.UserHash{
+	user := domain.User{
 		Username: request.Username,
 		Password: passwordHash,
 	}
 
-	userResponse, err := service.UserRepo.CreateUserHash(ctx, &user, service.DB)
+	userResponse, err := service.UserRepo.CreateUser(ctx, service.DB, &user)
 	if err != nil {
 		return nil, err
 	}
@@ -50,9 +51,9 @@ func (service *UserServiceImpl) Register(ctx context.Context, request *model.Use
 
 }
 
-func (service *UserServiceImpl) Login(ctx context.Context, request *model.UserLogin) (*model.UserResponseLogin, error) {
+func (service *UserServiceImpl) Login(ctx context.Context, request *web.UserCreate) (*web.UserResponseLogin, error) {
 
-	user, err := service.UserRepo.FindUserHash(ctx, request.Username, service.DB)
+	user, err := service.UserRepo.FindUser(ctx, service.DB, request.Username)
 	if err != nil {
 		return nil, err
 	}
@@ -61,8 +62,8 @@ func (service *UserServiceImpl) Login(ctx context.Context, request *model.UserLo
 		return nil, errors.New("username or password incorrect")
 	}
 
-	claims := &model.Claim{
-		User: model.UserResponse{
+	claims := &web.Claim{
+		User: web.UserResponse{
 			ID:       user.ID,
 			Username: user.Username,
 		},
@@ -80,7 +81,7 @@ func (service *UserServiceImpl) Login(ctx context.Context, request *model.UserLo
 
 }
 
-func (service *UserServiceImpl) FindAll(ctx context.Context) ([]*model.UserResponse, error) {
+func (service *UserServiceImpl) FindAll(ctx context.Context) ([]*web.UserResponse, error) {
 
 	users, err := service.UserRepo.FindAll(ctx, service.DB)
 	if err != nil {

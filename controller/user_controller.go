@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/faridlan/auth-go/model"
+	"github.com/faridlan/auth-go/model/web"
 	"github.com/faridlan/auth-go/service"
 	"github.com/gofiber/fiber/v2"
 )
@@ -24,7 +24,7 @@ func NewUserController(userService service.UserService) UserController {
 
 func (controller *UserControllerImpl) Register(ctx *fiber.Ctx) error {
 
-	user := new(model.UserCreate)
+	user := new(web.UserCreate)
 	err := ctx.BodyParser(user)
 	if err != nil {
 		return err
@@ -35,7 +35,7 @@ func (controller *UserControllerImpl) Register(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	webResponse := model.WebResponse{
+	webResponse := web.WebResponse{
 		Code:   200,
 		Status: "OK",
 		Data:   userResponse,
@@ -47,7 +47,7 @@ func (controller *UserControllerImpl) Register(ctx *fiber.Ctx) error {
 
 func (controller *UserControllerImpl) Login(ctx *fiber.Ctx) error {
 
-	user := new(model.UserLogin)
+	user := new(web.UserCreate)
 	err := ctx.BodyParser(user)
 	if err != nil {
 		return err
@@ -58,7 +58,7 @@ func (controller *UserControllerImpl) Login(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	webResponse := model.WebResponse{
+	webResponse := web.WebResponse{
 		Code:   200,
 		Status: "OK",
 		Data:   userResponse,
@@ -74,7 +74,7 @@ func (controller *UserControllerImpl) FindAll(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	webResponse := model.WebResponse{
+	webResponse := web.WebResponse{
 		Code:   200,
 		Status: "OK",
 		Data:   userResponses,
