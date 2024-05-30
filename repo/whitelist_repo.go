@@ -13,6 +13,7 @@ type WhitelistRepo interface {
 	Save(ctx context.Context, db *gorm.DB, whitelist *domain.Whitelist) (*domain.Whitelist, error)
 	FindById(ctx context.Context, db *gorm.DB, token string) (*domain.Whitelist, error)
 	Delete(ctx context.Context, db *gorm.DB, whitelist *domain.Whitelist) error
+	Truncate(ctx context.Context, db *gorm.DB) error
 }
 
 type WhitelistRepoImpl struct {
@@ -36,7 +37,7 @@ func (repo *WhitelistRepoImpl) Save(ctx context.Context, db *gorm.DB, whitelist 
 func (repo *WhitelistRepoImpl) FindById(ctx context.Context, db *gorm.DB, token string) (*domain.Whitelist, error) {
 
 	whitelist := &domain.Whitelist{}
-	err := db.Where("token = ?", token).First(whitelist).Error
+	err := db.Where("token = ?", token).Take(whitelist).Error
 	if err != nil {
 		return nil, errors.New("whitelist not found")
 	}
@@ -50,6 +51,17 @@ func (repo *WhitelistRepoImpl) Delete(ctx context.Context, db *gorm.DB, whitelis
 	err := db.Delete(&whitelist).Error
 	if err != nil {
 		return errors.New("delete canceled")
+	}
+
+	return nil
+
+}
+
+func (repo *WhitelistRepoImpl) Truncate(ctx context.Context, db *gorm.DB) error {
+
+	err := db.Exec("TRUNCATE whitelist CASCADE").Error
+	if err != nil {
+		return err
 	}
 
 	return nil

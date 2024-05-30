@@ -13,6 +13,7 @@ type UserRepo interface {
 	CreateUser(ctx context.Context, db *gorm.DB, user *domain.User) (*domain.User, error)
 	FindUser(ctx context.Context, db *gorm.DB, username string) (*domain.User, error)
 	FindAll(ctx context.Context, db *gorm.DB) ([]*domain.User, error)
+	Truncate(ctx context.Context, db *gorm.DB) error
 }
 
 type UserRepoImpl struct {
@@ -36,7 +37,7 @@ func (repo *UserRepoImpl) CreateUser(ctx context.Context, db *gorm.DB, user *dom
 func (repo *UserRepoImpl) FindUser(ctx context.Context, db *gorm.DB, username string) (*domain.User, error) {
 
 	user := &domain.User{}
-	err := db.Where("username = ?", username).Find(&user).Error
+	err := db.Where("username = ?", username).Take(&user).Error
 	if err != nil {
 		return nil, errors.New("user not found")
 	}
@@ -54,5 +55,16 @@ func (repo *UserRepoImpl) FindAll(ctx context.Context, db *gorm.DB) ([]*domain.U
 	}
 
 	return users, nil
+
+}
+
+func (repo *UserRepoImpl) Truncate(ctx context.Context, db *gorm.DB) error {
+
+	err := db.Exec("TRUNCATE users CASCADE").Error
+	if err != nil {
+		return err
+	}
+
+	return nil
 
 }

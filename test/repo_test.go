@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/faridlan/auth-go/config"
@@ -21,20 +22,34 @@ var (
 	userService    = service.NewUserService(userRepo, whitelistRepo, db)
 	userController = controller.NewUserController(userService)
 	app            = fiber.New()
+	ctx            = context.Background()
 )
 
-// func setupTestFlags(config string) {
+func CreateUser(username string) (*domain.User, error) {
 
-// 	flag.CommandLine = flag.NewFlagSet("test", flag.ContinueOnError)
-// 	helper.SetupFlags()
-// 	flag.Set("config", config)
-// 	flag.Parse()
+	hashesPassword, err := helper.HashPassword("secret010203")
+	if err != nil {
+		return nil, err
+	}
 
-// }
+	user := &domain.User{
+		Username: username,
+		Password: hashesPassword,
+	}
+
+	userResponse, err := userRepo.CreateUser(ctx, db, user)
+	if err != nil {
+		return nil, err
+	}
+
+	return userResponse, nil
+
+}
 
 func TestRegisterRepoSuccess(t *testing.T) {
 
-	// setupTestFlags("../.env")
+	err := userRepo.Truncate(ctx, db)
+	assert.Nil(t, err)
 
 	hashesPassword, err := helper.HashPassword("secret010203")
 	assert.Nil(t, err)
@@ -44,7 +59,7 @@ func TestRegisterRepoSuccess(t *testing.T) {
 		Password: hashesPassword,
 	}
 
-	userResponse, err := userRepo.CreateUser(context.Background(), db, user)
+	userResponse, err := userRepo.CreateUser(ctx, db, user)
 	assert.Nil(t, err)
 
 	assert.Equal(t, "user_repo_7655", userResponse.Username)
@@ -53,38 +68,58 @@ func TestRegisterRepoSuccess(t *testing.T) {
 
 func TestRegisterRepoFailed(t *testing.T) {
 
-	user := &domain.User{
-		Username: "user_repo_009",
+	err := userRepo.Truncate(ctx, db)
+	assert.Nil(t, err)
+
+	user, err := CreateUser("user_test_001")
+	assert.Nil(t, err)
+
+	userResponse := &domain.User{
+		Username: user.Username,
 	}
 
-	_, err := userRepo.CreateUser(context.Background(), db, user)
+	_, err = userRepo.CreateUser(ctx, db, userResponse)
 	assert.NotNil(t, err)
 
 }
 
 func TestFindUserRepoSuccess(t *testing.T) {
 
-	user, err := userRepo.FindUser(context.Background(), db, "user_repo_009")
+	err := userRepo.Truncate(ctx, db)
 	assert.Nil(t, err)
 
-	assert.Equal(t, "user_repo_009", user.Username)
+	user, err := CreateUser("user_test_001")
+	assert.Nil(t, err)
+
+	userResponse, err := userRepo.FindUser(ctx, db, user.Username)
+	assert.Nil(t, err)
+
+	assert.Equal(t, "user_test_001", userResponse.Username)
 
 }
 
 func TestFindUserRepoFailed(t *testing.T) {
 
-	user, err := userRepo.FindUser(context.Background(), db, "user_repo_009")
-	assert.Nil(t, err)
+	_, err := userRepo.FindUser(ctx, db, "not_found_user")
+	assert.NotNil(t, err)
 
-	assert.Equal(t, "user_repo_009", user.Username)
+	assert.Equal(t, "user not found", err.Error())
 
 }
 
 func TestFindAllRepoSuccess(t *testing.T) {
 
-	user, err := userRepo.FindAll(context.Background(), db)
+	err := userRepo.Truncate(ctx, db)
 	assert.Nil(t, err)
 
-	assert.Equal(t, 13, len(user))
+	for i := 1; i <= 2; i++ {
+		_, err := CreateUser(fmt.Sprintf("user_test_%d", i))
+		assert.Nil(t, err)
+	}
+
+	user, err := userRepo.FindAll(ctx, db)
+	assert.Nil(t, err)
+
+	assert.Equal(t, 2, len(user))
 
 }
