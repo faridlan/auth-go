@@ -13,8 +13,10 @@ func main() {
 
 	db := config.NewDatabase()
 
+	whitelistRepo := repo.NewWhitelistRepo()
+
 	userRepo := repo.NewUserRepo()
-	userService := service.NewUserService(userRepo, db)
+	userService := service.NewUserService(userRepo, whitelistRepo, db)
 	userControlelr := controller.NewUserController(userService)
 
 	app := fiber.New()
@@ -22,6 +24,7 @@ func main() {
 
 	app.Post("api/users", userControlelr.Register)
 	app.Post("api/users/login", userControlelr.Login)
+	app.Post("api/users/logout", userControlelr.Logout)
 	app.Get("api/users", userControlelr.FindAll)
 
 	app.Listen("localhost:2020")

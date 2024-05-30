@@ -8,11 +8,13 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
 	"github.com/faridlan/auth-go/helper"
 	"github.com/faridlan/auth-go/model/web"
+	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -108,4 +110,30 @@ func GenerateAndStorePrivateKey(filePath string) (*ecdsa.PrivateKey, error) {
 	}
 
 	return privateKey, nil
+}
+
+func ParseJwtAuth(ctx *fiber.Ctx) (string, error) {
+
+	auth := ctx.Get("Authorization")
+	authString := auth[7:]
+	// Parse the token without validating the signature
+	token, _, err := new(jwt.Parser).ParseUnverified(authString, jwt.MapClaims{})
+	if err != nil {
+		log.Fatalf("Error parsing token: %v", err)
+	}
+
+	// Extract the claims
+	claims := token.Claims.(jwt.MapClaims)
+	if user, ok := claims["user"].(map[string]interface{}); ok {
+		if whitelist, ok := user["whitelist"].(string); ok {
+			return whitelist, nil
+		} else {
+			log.Fatalf("whitelist not found or not a string in user map")
+		}
+	} else {
+		log.Fatalf("user not found or not a map in claims")
+	}
+
+	return "", nil
+
 }

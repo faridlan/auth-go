@@ -35,14 +35,14 @@ func TestRegisterServiceFailed(t *testing.T) {
 
 func TestLoginServiceSuccess(t *testing.T) {
 	user := &web.UserCreate{
-		Username: "user_service_009",
+		Username: "user_service_909",
 		Password: "secret010203",
 	}
 
 	userResponse, err := userService.Login(context.Background(), user)
 	assert.Nil(t, err)
 
-	assert.Equal(t, "user_service_009", userResponse.User.Username)
+	assert.Equal(t, "user_service_909", userResponse.User.Username)
 	assert.NotNil(t, userResponse.Token)
 }
 

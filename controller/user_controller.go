@@ -1,6 +1,7 @@
 package controller
 
 import (
+	jwtconfig "github.com/faridlan/auth-go/helper/jwt_config"
 	"github.com/faridlan/auth-go/model/web"
 	"github.com/faridlan/auth-go/service"
 	"github.com/gofiber/fiber/v2"
@@ -10,6 +11,7 @@ type UserController interface {
 	Register(ctx *fiber.Ctx) error
 	Login(ctx *fiber.Ctx) error
 	FindAll(ctx *fiber.Ctx) error
+	Logout(ctx *fiber.Ctx) error
 }
 
 type UserControllerImpl struct {
@@ -78,6 +80,23 @@ func (controller *UserControllerImpl) FindAll(ctx *fiber.Ctx) error {
 		Code:   200,
 		Status: "OK",
 		Data:   userResponses,
+	}
+
+	return ctx.JSON(webResponse)
+
+}
+
+func (controller *UserControllerImpl) Logout(ctx *fiber.Ctx) error {
+
+	whitelist, _ := jwtconfig.ParseJwtAuth(ctx)
+	err := controller.UserService.Logout(ctx.Context(), whitelist)
+	if err != nil {
+		return err
+	}
+
+	webResponse := web.WebResponse{
+		Code:   200,
+		Status: "OK",
 	}
 
 	return ctx.JSON(webResponse)

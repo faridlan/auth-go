@@ -16,8 +16,9 @@ import (
 
 var (
 	userRepo       = repo.NewUserRepo()
+	whitelistRepo  = repo.NewWhitelistRepo()
 	db             = config.NewDatabase()
-	userService    = service.NewUserService(userRepo, db)
+	userService    = service.NewUserService(userRepo, whitelistRepo, db)
 	userController = controller.NewUserController(userService)
 	app            = fiber.New()
 )

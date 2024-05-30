@@ -47,7 +47,7 @@ func TestRegisterControllerSuccess(t *testing.T) {
 
 	body := strings.NewReader(
 		`{
-			"username" : "username_controller_009",
+			"username" : "username_controller_009_new",
 			"password" : "secret01020304"
 		}`,
 	)
@@ -90,7 +90,7 @@ func TestLoginControllerSuccess(t *testing.T) {
 
 	body := strings.NewReader(
 		`{
-			"username" : "username_controller_009",
+			"username" : "username_controller_009_new",
 			"password" : "secret01020304"
 		}`,
 	)

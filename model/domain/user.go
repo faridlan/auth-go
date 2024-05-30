@@ -12,5 +12,5 @@ type User struct {
 }
 
 func (u *User) TableName() string {
-	return "users_hash"
+	return "users"
 }

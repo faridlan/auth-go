@@ -1,11 +1,14 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
 	"time"
 
+	"github.com/faridlan/auth-go/config"
 	"github.com/faridlan/auth-go/helper"
 	jwtconfig "github.com/faridlan/auth-go/helper/jwt_config"
+	"github.com/faridlan/auth-go/repo"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -23,6 +26,18 @@ func AuthMiddleware(ctx *fiber.Ctx) error {
 	}
 
 	tokenBearer := authorization[7:]
+
+	//
+	db := config.NewDatabase()
+	authToken, _ := jwtconfig.ParseJwtAuth(ctx)
+	whitelistRepo := repo.NewWhitelistRepo()
+	_, err := whitelistRepo.FindById(context.Background(), db, authToken)
+	if err != nil {
+		ctx.Status(fiber.StatusUnauthorized)
+		return ctx.SendString("UNAUTHORIZED")
+	}
+	//
+
 	config, err := helper.GetEnv()
 	if err != nil {
 		panic(err)

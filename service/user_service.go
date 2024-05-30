@@ -15,18 +15,21 @@ import (
 type UserService interface {
 	Register(ctx context.Context, request *web.UserCreate) (*web.UserResponse, error)
 	Login(ctx context.Context, request *web.UserCreate) (*web.UserResponseLogin, error)
+	Logout(ctx context.Context, whitelistID string) error
 	FindAll(ctx context.Context) ([]*web.UserResponse, error)
 }
 
 type UserServiceImpl struct {
-	UserRepo repo.UserRepo
-	DB       *gorm.DB
+	UserRepo  repo.UserRepo
+	Whitelist repo.WhitelistRepo
+	DB        *gorm.DB
 }
 
-func NewUserService(userRepo repo.UserRepo, db *gorm.DB) UserService {
+func NewUserService(userRepo repo.UserRepo, whitelist repo.WhitelistRepo, db *gorm.DB) UserService {
 	return &UserServiceImpl{
-		UserRepo: userRepo,
-		DB:       db,
+		UserRepo:  userRepo,
+		Whitelist: whitelist,
+		DB:        db,
 	}
 }
 
@@ -53,7 +56,10 @@ func (service *UserServiceImpl) Register(ctx context.Context, request *web.UserC
 
 func (service *UserServiceImpl) Login(ctx context.Context, request *web.UserCreate) (*web.UserResponseLogin, error) {
 
-	user, err := service.UserRepo.FindUser(ctx, service.DB, request.Username)
+	tx := service.DB.Begin()
+	defer tx.Rollback()
+
+	user, err := service.UserRepo.FindUser(ctx, tx, request.Username)
 	if err != nil {
 		return nil, err
 	}
@@ -62,10 +68,23 @@ func (service *UserServiceImpl) Login(ctx context.Context, request *web.UserCrea
 		return nil, errors.New("username or password incorrect")
 	}
 
+	randomString := helper.RandomString(16)
+	tokenWhitelist := &domain.Whitelist{
+		Token: randomString,
+	}
+
+	token, err := service.Whitelist.Save(ctx, tx, tokenWhitelist)
+	if err == nil {
+		tx.Commit()
+	} else {
+		return nil, err
+	}
+
 	claims := &web.Claim{
 		User: web.UserResponse{
-			ID:       user.ID,
-			Username: user.Username,
+			ID:        user.ID,
+			Username:  user.Username,
+			Whitelist: token.Token,
 		},
 	}
 
@@ -89,5 +108,26 @@ func (service *UserServiceImpl) FindAll(ctx context.Context) ([]*web.UserRespons
 	}
 
 	return helper.ToUserResponses(users), nil
+
+}
+
+func (service *UserServiceImpl) Logout(ctx context.Context, whitelistID string) error {
+
+	tx := service.DB.Begin()
+	defer tx.Rollback()
+
+	user, err := service.Whitelist.FindById(ctx, tx, whitelistID)
+	if err != nil {
+		return err
+	}
+
+	err = service.Whitelist.Delete(ctx, tx, user)
+	if err == nil {
+		tx.Commit()
+	} else {
+		return err
+	}
+
+	return nil
 
 }
