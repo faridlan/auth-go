@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/faridlan/auth-go/config"
 	"github.com/faridlan/auth-go/controller"
+	"github.com/faridlan/auth-go/exception"
 	"github.com/faridlan/auth-go/middleware"
 	"github.com/faridlan/auth-go/repo"
 	"github.com/faridlan/auth-go/service"
@@ -19,7 +20,11 @@ func main() {
 	userService := service.NewUserService(userRepo, whitelistRepo, db)
 	userControlelr := controller.NewUserController(userService)
 
-	app := fiber.New()
+	app := fiber.New(
+		fiber.Config{
+			ErrorHandler: exception.ExceptionError,
+		},
+	)
 	app.Use(middleware.AuthMiddleware)
 
 	app.Post("api/users", userControlelr.Register)

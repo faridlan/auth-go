@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/faridlan/auth-go/config"
+	"github.com/faridlan/auth-go/exception"
 	"github.com/faridlan/auth-go/helper"
 	jwtconfig "github.com/faridlan/auth-go/helper/jwt_config"
 	"github.com/faridlan/auth-go/repo"
@@ -21,8 +22,7 @@ func AuthMiddleware(ctx *fiber.Ctx) error {
 	}
 
 	if len(authorization) < 8 || authorization[:7] != "Bearer " {
-		ctx.Status(fiber.StatusUnauthorized)
-		return ctx.SendString("UNAUTHORIZED")
+		return exception.NewUnauthorizedError("Missing or invalid token format")
 	}
 
 	tokenBearer := authorization[7:]
@@ -33,27 +33,25 @@ func AuthMiddleware(ctx *fiber.Ctx) error {
 	whitelistRepo := repo.NewWhitelistRepo()
 	_, err := whitelistRepo.FindById(context.Background(), db, authToken)
 	if err != nil {
-		ctx.Status(fiber.StatusUnauthorized)
-		return ctx.SendString("UNAUTHORIZED")
+		return exception.NewUnauthorizedError(err.Error())
 	}
 	//
 
 	config, err := helper.GetEnv()
 	if err != nil {
-		panic(err)
+		return err
 	}
+
 	path := config.GetString("PRIVATE_KEY")
 
 	privateKey, err := jwtconfig.LoadPrivateKey(path)
 	if err != nil {
-		ctx.Status(fiber.StatusUnauthorized)
-		return ctx.SendString("Failed to load private key: " + err.Error())
+		return exception.NewUnauthorizedError(err.Error())
 	}
 
 	claims, _, err := jwtconfig.VerifyToken(tokenBearer, &privateKey.PublicKey)
 	if err != nil {
-		ctx.Status(fiber.StatusUnauthorized)
-		return ctx.SendString("invalid token")
+		return exception.NewUnauthorizedError(err.Error())
 	}
 
 	// Check token expiration time
@@ -66,8 +64,9 @@ func AuthMiddleware(ctx *fiber.Ctx) error {
 		newToken, err := jwtconfig.GenerateJWT(claims)
 		// newToken, err := GenerateToken(claims.User)
 		if err != nil {
-			ctx.Status(fiber.StatusInternalServerError)
-			return ctx.SendString("Failed to generate new token: " + err.Error())
+			return err
+			// ctx.Status(fiber.StatusInternalServerError)
+			// return ctx.SendString("Failed to generate new token: " + err.Error())
 		}
 
 		fmt.Println(newToken)
