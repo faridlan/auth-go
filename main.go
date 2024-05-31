@@ -7,18 +7,20 @@ import (
 	"github.com/faridlan/auth-go/middleware"
 	"github.com/faridlan/auth-go/repo"
 	"github.com/faridlan/auth-go/service"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
 
 	db := config.NewDatabase()
+	validator := validator.New()
 
 	whitelistRepo := repo.NewWhitelistRepo()
 
 	userRepo := repo.NewUserRepo()
-	userService := service.NewUserService(userRepo, whitelistRepo, db)
-	userControlelr := controller.NewUserController(userService)
+	userService := service.NewUserService(userRepo, whitelistRepo, db, validator)
+	userController := controller.NewUserController(userService)
 
 	app := fiber.New(
 		fiber.Config{
@@ -27,10 +29,10 @@ func main() {
 	)
 	app.Use(middleware.AuthMiddleware)
 
-	app.Post("api/users", userControlelr.Register)
-	app.Post("api/users/login", userControlelr.Login)
-	app.Post("api/users/logout", userControlelr.Logout)
-	app.Get("api/users", userControlelr.FindAll)
+	app.Post("api/users", userController.Register)
+	app.Post("api/users/login", userController.Login)
+	app.Post("api/users/logout", userController.Logout)
+	app.Get("api/users", userController.FindAll)
 
 	app.Listen("localhost:2020")
 

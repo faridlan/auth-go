@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 
+	"github.com/faridlan/auth-go/exception"
 	"github.com/faridlan/auth-go/helper"
 	jwtconfig "github.com/faridlan/auth-go/helper/jwt_config"
 	"github.com/faridlan/auth-go/model/domain"
 	"github.com/faridlan/auth-go/model/web"
 	"github.com/faridlan/auth-go/repo"
+	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
 )
 
@@ -23,17 +25,25 @@ type UserServiceImpl struct {
 	UserRepo  repo.UserRepo
 	Whitelist repo.WhitelistRepo
 	DB        *gorm.DB
+	Validate  *validator.Validate
 }
 
-func NewUserService(userRepo repo.UserRepo, whitelist repo.WhitelistRepo, db *gorm.DB) UserService {
+func NewUserService(userRepo repo.UserRepo, whitelist repo.WhitelistRepo, db *gorm.DB, validate *validator.Validate) UserService {
 	return &UserServiceImpl{
 		UserRepo:  userRepo,
 		Whitelist: whitelist,
 		DB:        db,
+		Validate:  validate,
 	}
 }
 
 func (service *UserServiceImpl) Register(ctx context.Context, request *web.UserCreate) (*web.UserResponse, error) {
+
+	err := service.Validate.Struct(request)
+	errString := helper.TranslateError(err, service.Validate)
+	if err != nil {
+		return nil, exception.NewBadRequestError(errString)
+	}
 
 	passwordHash, err := helper.HashPassword(request.Password)
 	if err != nil {
@@ -55,6 +65,12 @@ func (service *UserServiceImpl) Register(ctx context.Context, request *web.UserC
 }
 
 func (service *UserServiceImpl) Login(ctx context.Context, request *web.UserCreate) (*web.UserResponseLogin, error) {
+
+	err := service.Validate.Struct(request)
+	errString := helper.TranslateError(err, service.Validate)
+	if err != nil {
+		return nil, exception.NewBadRequestError(errString)
+	}
 
 	tx := service.DB.Begin()
 	defer tx.Rollback()

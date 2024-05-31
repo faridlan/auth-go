@@ -1,8 +1,8 @@
 package web
 
 type UserCreate struct {
-	Username string `json:"username,omitempty"`
-	Password string `json:"password,omitempty"`
+	Username string `json:"username,omitempty" validate:"required,gte=4"`
+	Password string `json:"password,omitempty" validate:"required,gte=8"`
 }
 
 type UserResponse struct {

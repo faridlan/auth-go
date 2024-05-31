@@ -11,6 +11,7 @@ import (
 	"github.com/faridlan/auth-go/model/domain"
 	"github.com/faridlan/auth-go/repo"
 	"github.com/faridlan/auth-go/service"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 )
@@ -19,7 +20,8 @@ var (
 	userRepo       = repo.NewUserRepo()
 	whitelistRepo  = repo.NewWhitelistRepo()
 	db             = config.NewDatabase()
-	userService    = service.NewUserService(userRepo, whitelistRepo, db)
+	validate       = validator.New()
+	userService    = service.NewUserService(userRepo, whitelistRepo, db, validate)
 	userController = controller.NewUserController(userService)
 	app            = fiber.New()
 	ctx            = context.Background()
