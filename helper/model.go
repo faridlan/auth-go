@@ -35,3 +35,23 @@ func ToUserResponses(users []*domain.User) []*web.UserResponse {
 	return userResponses
 
 }
+
+func ToRoleResponse(role *domain.Role) *web.RoleResponse {
+	return &web.RoleResponse{
+		ID:        role.ID,
+		Name:      role.Name,
+		CreatedAt: role.CreatedAt,
+		UpdatedAt: role.UpdatedAt,
+	}
+}
+
+func ToRoleResponses(roles []*domain.Role) []*web.RoleResponse {
+
+	roleResponses := []*web.RoleResponse{}
+	for _, role := range roles {
+		roleResponses = append(roleResponses, ToRoleResponse(role))
+	}
+
+	return roleResponses
+
+}

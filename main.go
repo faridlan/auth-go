@@ -22,6 +22,10 @@ func main() {
 	userService := service.NewUserService(userRepo, whitelistRepo, db, validator)
 	userController := controller.NewUserController(userService)
 
+	roleRepo := repo.NewRoleRepo()
+	roleService := service.NewRoleService(roleRepo, db, validator)
+	roleController := controller.NewRoleController(roleService)
+
 	app := fiber.New(
 		fiber.Config{
 			ErrorHandler: exception.ExceptionError,
@@ -33,6 +37,10 @@ func main() {
 	app.Post("api/users/login", userController.Login)
 	app.Post("api/users/logout", userController.Logout)
 	app.Get("api/users", userController.FindAll)
+
+	app.Post("api/roles", roleController.Create)
+	app.Get("api/roles/:id", roleController.FindById)
+	app.Get("api/roles", roleController.FindAll)
 
 	app.Listen("localhost:2020")
 
