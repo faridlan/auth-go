@@ -27,22 +27,12 @@ func AuthMiddleware(ctx *fiber.Ctx) error {
 
 	tokenBearer := authorization[7:]
 
-	//
-	db := config.NewDatabase()
-	authToken, _ := jwtconfig.ParseJwtAuth(ctx)
-	whitelistRepo := repo.NewWhitelistRepo()
-	_, err := whitelistRepo.FindById(context.Background(), db, authToken)
-	if err != nil {
-		return exception.NewUnauthorizedError(err.Error())
-	}
-	//
-
-	config, err := helper.GetEnv()
+	configEnv, err := helper.GetEnv()
 	if err != nil {
 		return err
 	}
 
-	path := config.GetString("PRIVATE_KEY")
+	path := configEnv.GetString("PRIVATE_KEY")
 
 	privateKey, err := jwtconfig.LoadPrivateKey(path)
 	if err != nil {
@@ -53,6 +43,16 @@ func AuthMiddleware(ctx *fiber.Ctx) error {
 	if err != nil {
 		return exception.NewUnauthorizedError(err.Error())
 	}
+
+	//
+	db := config.NewDatabase()
+	authToken, _ := jwtconfig.ParseJwtAuth(ctx)
+	whitelistRepo := repo.NewWhitelistRepo()
+	_, err = whitelistRepo.FindById(context.Background(), db, authToken)
+	if err != nil {
+		return exception.NewUnauthorizedError(err.Error())
+	}
+	//
 
 	// Check token expiration time
 	exp := claims.ExpiresAt
