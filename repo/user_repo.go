@@ -25,7 +25,7 @@ func NewUserRepo() UserRepo {
 
 func (repo *UserRepoImpl) CreateUser(ctx context.Context, db *gorm.DB, user *domain.User) (*domain.User, error) {
 
-	err := db.Omit("ID").Clauses(clause.Returning{}).Select("username", "hashed_password").Create(&user).Error
+	err := db.Omit("ID").Clauses(clause.Returning{}).Select("username", "hashed_password", "role_id").Create(&user).Error
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func (repo *UserRepoImpl) CreateUser(ctx context.Context, db *gorm.DB, user *dom
 func (repo *UserRepoImpl) FindUser(ctx context.Context, db *gorm.DB, username string) (*domain.User, error) {
 
 	user := &domain.User{}
-	err := db.Where("username = ?", username).Take(&user).Error
+	err := db.Preload("Role").Take(&user, "username = ?", username).Error
 	if err != nil {
 		return nil, errors.New("user not found")
 	}
@@ -49,7 +49,7 @@ func (repo *UserRepoImpl) FindUser(ctx context.Context, db *gorm.DB, username st
 func (repo *UserRepoImpl) FindAll(ctx context.Context, db *gorm.DB) ([]*domain.User, error) {
 
 	users := []*domain.User{}
-	err := db.Find(&users).Error
+	err := db.Preload("Role").Find(&users).Error
 	if err != nil {
 		return nil, err
 	}

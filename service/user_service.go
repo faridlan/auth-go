@@ -16,7 +16,7 @@ import (
 
 type UserService interface {
 	Register(ctx context.Context, request *web.UserCreate) (*web.UserResponse, error)
-	Login(ctx context.Context, request *web.UserCreate) (*web.UserResponseLogin, error)
+	Login(ctx context.Context, request *web.UserLogin) (*web.UserResponseLogin, error)
 	Logout(ctx context.Context, whitelistID string) error
 	FindAll(ctx context.Context) ([]*web.UserResponse, error)
 }
@@ -45,6 +45,9 @@ func (service *UserServiceImpl) Register(ctx context.Context, request *web.UserC
 		return nil, exception.NewBadRequestError(errString)
 	}
 
+	tx := service.DB.Begin()
+	defer tx.Rollback()
+
 	passwordHash, err := helper.HashPassword(request.Password)
 	if err != nil {
 		return nil, err
@@ -53,10 +56,18 @@ func (service *UserServiceImpl) Register(ctx context.Context, request *web.UserC
 	user := domain.User{
 		Username: request.Username,
 		Password: passwordHash,
+		RoleId:   request.RoleId,
 	}
 
-	userResponse, err := service.UserRepo.CreateUser(ctx, service.DB, &user)
+	userResponse, err := service.UserRepo.CreateUser(ctx, tx, &user)
 	if err != nil {
+		return nil, err
+	}
+
+	userResponse, err = service.UserRepo.FindUser(ctx, tx, userResponse.Username)
+	if err == nil {
+		tx.Commit()
+	} else {
 		return nil, err
 	}
 
@@ -64,7 +75,7 @@ func (service *UserServiceImpl) Register(ctx context.Context, request *web.UserC
 
 }
 
-func (service *UserServiceImpl) Login(ctx context.Context, request *web.UserCreate) (*web.UserResponseLogin, error) {
+func (service *UserServiceImpl) Login(ctx context.Context, request *web.UserLogin) (*web.UserResponseLogin, error) {
 
 	err := service.Validate.Struct(request)
 	errString := helper.TranslateError(err, service.Validate)
@@ -98,8 +109,14 @@ func (service *UserServiceImpl) Login(ctx context.Context, request *web.UserCrea
 
 	claims := &web.Claim{
 		User: web.UserResponse{
-			ID:        user.ID,
-			Username:  user.Username,
+			ID:       user.ID,
+			Username: user.Username,
+			Role: web.RoleResponse{
+				ID:        user.Role.ID,
+				Name:      user.Role.Name,
+				CreatedAt: user.Role.CreatedAt,
+				UpdatedAt: user.Role.UpdatedAt,
+			},
 			Whitelist: token.Token,
 		},
 	}

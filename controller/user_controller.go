@@ -49,7 +49,7 @@ func (controller *UserControllerImpl) Register(ctx *fiber.Ctx) error {
 
 func (controller *UserControllerImpl) Login(ctx *fiber.Ctx) error {
 
-	user := new(web.UserCreate)
+	user := new(web.UserLogin)
 	err := ctx.BodyParser(user)
 	if err != nil {
 		return err

@@ -7,8 +7,14 @@ import (
 
 func ToUserResponse(user *domain.User) *web.UserResponse {
 	return &web.UserResponse{
-		ID:        user.ID,
-		Username:  user.Username,
+		ID:       user.ID,
+		Username: user.Username,
+		Role: web.RoleResponse{
+			ID:        user.Role.ID,
+			Name:      user.Role.Name,
+			CreatedAt: user.Role.CreatedAt,
+			UpdatedAt: user.Role.UpdatedAt,
+		},
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 	}
@@ -17,8 +23,14 @@ func ToUserResponse(user *domain.User) *web.UserResponse {
 func ToUserResponseLogin(user *domain.User) *web.UserResponseLogin {
 	return &web.UserResponseLogin{
 		User: &web.UserResponse{
-			ID:        user.ID,
-			Username:  user.Username,
+			ID:       user.ID,
+			Username: user.Username,
+			Role: web.RoleResponse{
+				ID:        user.Role.ID,
+				Name:      user.Role.Name,
+				CreatedAt: user.Role.CreatedAt,
+				UpdatedAt: user.Role.UpdatedAt,
+			},
 			CreatedAt: user.CreatedAt,
 			UpdatedAt: user.UpdatedAt,
 		},

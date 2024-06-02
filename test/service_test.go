@@ -53,7 +53,7 @@ func TestLoginServiceSuccess(t *testing.T) {
 	user, err := CreateUser("user_service_test")
 	assert.Nil(t, err)
 
-	userResponse := &web.UserCreate{
+	userResponse := &web.UserLogin{
 		Username: user.Username,
 		Password: "secret010203",
 	}
@@ -71,7 +71,7 @@ func TestLoginServiceFailed(t *testing.T) {
 	err := userRepo.Truncate(ctx, db)
 	assert.Nil(t, err)
 
-	user := &web.UserCreate{
+	user := &web.UserLogin{
 		Username: "user_service_009",
 	}
 

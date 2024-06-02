@@ -3,14 +3,21 @@ package web
 type UserCreate struct {
 	Username string `json:"username,omitempty" validate:"required,gte=4"`
 	Password string `json:"password,omitempty" validate:"required,gte=8"`
+	RoleId   string `json:"role_id,omitempty" validate:"required"`
+}
+
+type UserLogin struct {
+	Username string `json:"username,omitempty" validate:"required,gte=4"`
+	Password string `json:"password,omitempty" validate:"required,gte=8"`
 }
 
 type UserResponse struct {
-	ID        string `json:"id,omitempty"`
-	Username  string `json:"username,omitempty"`
-	Whitelist string `json:"whitelist,omitempty"`
-	CreatedAt int64  `json:"created_at,omitempty"`
-	UpdatedAt int64  `json:"updated_at,omitempty"`
+	ID        string       `json:"id,omitempty"`
+	Username  string       `json:"username,omitempty"`
+	Role      RoleResponse `json:"role,omitempty"`
+	Whitelist string       `json:"whitelist,omitempty"`
+	CreatedAt int64        `json:"created_at,omitempty"`
+	UpdatedAt int64        `json:"updated_at,omitempty"`
 }
 
 type UserResponseLogin struct {
