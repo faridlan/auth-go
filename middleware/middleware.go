@@ -9,6 +9,7 @@ import (
 	"github.com/faridlan/auth-go/exception"
 	"github.com/faridlan/auth-go/helper"
 	jwtconfig "github.com/faridlan/auth-go/helper/jwt_config"
+	"github.com/faridlan/auth-go/model/web"
 	"github.com/faridlan/auth-go/repo"
 	"github.com/gofiber/fiber/v2"
 )
@@ -42,6 +43,13 @@ func AuthMiddleware(ctx *fiber.Ctx) error {
 	claims, _, err := jwtconfig.VerifyToken(tokenBearer, &privateKey.PublicKey)
 	if err != nil {
 		return exception.NewUnauthorizedError(err.Error())
+	} else {
+		endpoints := web.Enpoints()
+		for _, endpoint := range endpoints {
+			if ctx.Path() == endpoint.URL && ctx.Method() == endpoint.Method && claims.User.Role.Name != "role_root" {
+				return exception.NewUnauthorizedError("UNAUTHORIZED")
+			}
+		}
 	}
 
 	//
@@ -50,7 +58,7 @@ func AuthMiddleware(ctx *fiber.Ctx) error {
 	whitelistRepo := repo.NewWhitelistRepo()
 	_, err = whitelistRepo.FindById(context.Background(), db, authToken)
 	if err != nil {
-		return exception.NewUnauthorizedError(err.Error())
+		return exception.NewUnauthorizedError("Your Token Is Expired")
 	}
 	//
 

@@ -58,7 +58,9 @@ func GenerateJWT(claim *web.Claim) (string, error) {
 
 func VerifyToken(tokenString string, publicKey *ecdsa.PublicKey) (*web.Claim, *jwt.Token, error) {
 
-	token, err := jwt.ParseWithClaims(tokenString, &web.Claim{}, func(token *jwt.Token) (interface{}, error) {
+	claim := &web.Claim{}
+
+	token, err := jwt.ParseWithClaims(tokenString, claim, func(token *jwt.Token) (interface{}, error) {
 		// Check if the signing method is ES256.
 		if _, ok := token.Method.(*jwt.SigningMethodECDSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
