@@ -46,6 +46,7 @@ func (controller *RoleControllerImpl) Create(ctx *fiber.Ctx) error {
 }
 
 func (controller *RoleControllerImpl) FindById(ctx *fiber.Ctx) error {
+
 	id := ctx.Params("id")
 
 	roleResponse, err := controller.RoleService.FindById(ctx.Context(), id)

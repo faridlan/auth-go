@@ -57,7 +57,9 @@ func (service *RoleServiceImpl) FindById(ctx context.Context, roleId string) (*w
 
 	roleResponse, err := service.RoleRepo.FindById(ctx, service.DB, roleId)
 	if err != nil {
-		return nil, err
+		return nil, &exception.NotFoundError{
+			Message: err.Error(),
+		}
 	}
 
 	return helper.ToRoleResponse(roleResponse), nil

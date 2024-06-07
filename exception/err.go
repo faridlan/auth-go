@@ -8,6 +8,8 @@ import (
 func ExceptionError(ctx *fiber.Ctx, err error) error {
 
 	switch e := err.(type) {
+	case *NotFoundError:
+		return notFoundError(ctx, e.Error())
 	case *BadRequestError:
 		return badRequestError(ctx, e.Error())
 	case *UnauthorizedError:
@@ -56,6 +58,21 @@ func unauthorizedError(ctx *fiber.Ctx, err string) error {
 	webRespone := web.WebResponse{
 		Code:   fiber.StatusUnauthorized,
 		Status: "UNAUTHORIZED",
+		Data:   err,
+	}
+
+	return ctx.JSON(webRespone)
+
+}
+
+func notFoundError(ctx *fiber.Ctx, err string) error {
+
+	ctx.Request().Header.Add("content-type", "application/json")
+	ctx.Status(fiber.StatusNotFound)
+
+	webRespone := web.WebResponse{
+		Code:   fiber.StatusNotFound,
+		Status: "NOT FOUND",
 		Data:   err,
 	}
 

@@ -60,7 +60,8 @@ func (repo *UserRepoImpl) FindAll(ctx context.Context, db *gorm.DB) ([]*domain.U
 
 func (repo *UserRepoImpl) Truncate(ctx context.Context, db *gorm.DB) error {
 
-	err := db.Exec("TRUNCATE users CASCADE").Error
+	err := db.Exec("DELETE FROM users WHERE username <> 'user_001_new'").Error
+
 	if err != nil {
 		return err
 	}

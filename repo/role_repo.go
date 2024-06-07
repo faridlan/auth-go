@@ -37,7 +37,7 @@ func (repo *RoleRepoImpl) Save(ctx context.Context, db *gorm.DB, role *domain.Ro
 func (repo *RoleRepoImpl) FindById(ctx context.Context, db *gorm.DB, roleID string) (*domain.Role, error) {
 
 	role := &domain.Role{}
-	err := db.Where("id", roleID).Take(&role).Error
+	err := db.First(&role, "ID = ?", roleID).Error
 	if err != nil {
 		return nil, errors.New("role not found")
 	}
@@ -60,7 +60,7 @@ func (repo *RoleRepoImpl) FindAll(ctx context.Context, db *gorm.DB) ([]*domain.R
 
 func (repo *RoleRepoImpl) Truncate(ctx context.Context, db *gorm.DB) error {
 
-	err := db.Exec("TRUNCATE roles CASCADE").Error
+	err := db.Exec("DELETE FROM roles WHERE name <> 'role_root'").Error
 	if err != nil {
 		return err
 	}
