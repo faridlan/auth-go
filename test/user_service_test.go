@@ -13,9 +13,16 @@ func TestRegisterServiceSucces(t *testing.T) {
 	err := userRepo.Truncate(ctx, db)
 	assert.Nil(t, err)
 
+	err = roleRepo.Truncate(ctx, db)
+	assert.Nil(t, err)
+
+	role, err := CreateRole("role_test")
+	assert.Nil(t, err)
+
 	user := &web.UserCreate{
 		Username: "user_service_test",
 		Password: "secret010203",
+		RoleId:   role.ID,
 	}
 
 	userResponse, err := userService.Register(ctx, user)
@@ -87,7 +94,6 @@ func TestFindAllServiceSuccess(t *testing.T) {
 
 	for i := 1; i <= 2; i++ {
 		CreateUser(fmt.Sprintf("user_service_test_%d", i))
-
 	}
 
 	userResponse, err := userService.FindAll(ctx)

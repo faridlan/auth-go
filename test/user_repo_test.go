@@ -1,30 +1,12 @@
 package test
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
-	"github.com/faridlan/auth-go/config"
-	"github.com/faridlan/auth-go/controller"
 	"github.com/faridlan/auth-go/helper"
 	"github.com/faridlan/auth-go/model/domain"
-	"github.com/faridlan/auth-go/repo"
-	"github.com/faridlan/auth-go/service"
-	"github.com/go-playground/validator/v10"
-	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
-)
-
-var (
-	userRepo       = repo.NewUserRepo()
-	whitelistRepo  = repo.NewWhitelistRepo()
-	db             = config.NewDatabase()
-	validate       = validator.New()
-	userService    = service.NewUserService(userRepo, whitelistRepo, db, validate)
-	userController = controller.NewUserController(userService)
-	app            = fiber.New()
-	ctx            = context.Background()
 )
 
 func CreateUser(username string) (*domain.User, error) {
@@ -34,9 +16,20 @@ func CreateUser(username string) (*domain.User, error) {
 		return nil, err
 	}
 
+	err = roleRepo.Truncate(ctx, db)
+	if err != nil {
+		return nil, err
+	}
+
+	role, err := CreateRole("role_test")
+	if err != nil {
+		return nil, err
+	}
+
 	user := &domain.User{
 		Username: username,
 		Password: hashesPassword,
+		RoleId:   role.ID,
 	}
 
 	userResponse, err := userRepo.CreateUser(ctx, db, user)
@@ -48,17 +41,53 @@ func CreateUser(username string) (*domain.User, error) {
 
 }
 
+func CreateUserMany(username string) (*domain.User, error) {
+
+	hashesPassword, err := helper.HashPassword("secret010203")
+	if err != nil {
+		return nil, err
+	}
+
+	role, err := CreateRole("role_test_many")
+	if err != nil {
+		return nil, err
+	}
+
+	userResponse := &domain.User{}
+
+	for i := 1; i <= 3; i++ {
+		userResponse.Username = fmt.Sprintf(username+"_%d", i)
+		userResponse.Password = hashesPassword
+		userResponse.RoleId = role.ID
+
+		userResponse, err = userRepo.CreateUser(ctx, db, userResponse)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return userResponse, nil
+
+}
+
 func TestRegisterRepoSuccess(t *testing.T) {
 
 	err := userRepo.Truncate(ctx, db)
 	assert.Nil(t, err)
 
+	err = roleRepo.Truncate(ctx, db)
+	assert.Nil(t, err)
+
 	hashesPassword, err := helper.HashPassword("secret010203")
+	assert.Nil(t, err)
+
+	role, err := CreateRole("role_test")
 	assert.Nil(t, err)
 
 	user := &domain.User{
 		Username: "user_repo_7655",
 		Password: hashesPassword,
+		RoleId:   role.ID,
 	}
 
 	userResponse, err := userRepo.CreateUser(ctx, db, user)
@@ -114,14 +143,15 @@ func TestFindAllRepoSuccess(t *testing.T) {
 	err := userRepo.Truncate(ctx, db)
 	assert.Nil(t, err)
 
-	for i := 1; i <= 2; i++ {
-		_, err := CreateUser(fmt.Sprintf("user_test_%d", i))
-		assert.Nil(t, err)
-	}
+	err = roleRepo.Truncate(ctx, db)
+	assert.Nil(t, err)
+
+	_, err = CreateUserMany("user_test")
+	assert.Nil(t, err)
 
 	user, err := userRepo.FindAll(ctx, db)
 	assert.Nil(t, err)
 
-	assert.Equal(t, 2, len(user))
+	assert.Equal(t, 4, len(user))
 
 }

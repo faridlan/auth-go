@@ -46,13 +46,22 @@ func TestRegisterControllerSuccess(t *testing.T) {
 	err := userRepo.Truncate(ctx, db)
 	assert.Nil(t, err)
 
+	err = roleRepo.Truncate(ctx, db)
+	assert.Nil(t, err)
+
+	role, err := CreateRole("role_test")
+	assert.Nil(t, err)
+
 	app.Post("/api/users/", userController.Register)
 
 	body := strings.NewReader(
-		`{
-			"username" : "username_controller_test_001",
-			"password" : "secret01020304"
-		}`,
+		fmt.Sprintf(
+			`{
+				"username" : "username_controller_test_001",
+				"password" : "secret01020304",
+				"role_id": "%s"
+			}`, role.ID,
+		),
 	)
 
 	request := httptest.NewRequest("POST", "/api/users/", body)
@@ -73,6 +82,9 @@ func TestRegisterControllerFailed(t *testing.T) {
 	err := userRepo.Truncate(ctx, db)
 	assert.Nil(t, err)
 
+	err = roleRepo.Truncate(ctx, db)
+	assert.Nil(t, err)
+
 	user, err := CreateUser("username_controller_test_001")
 	assert.Nil(t, err)
 
@@ -82,8 +94,9 @@ func TestRegisterControllerFailed(t *testing.T) {
 		fmt.Sprintf(
 			`{
 			"username" : "%s",
-			"password" : "secret010203"
-		}`, user.Username),
+			"password" : "secret010203",
+			"role_id" : "%s"
+		}`, user.Username, ""),
 	)
 
 	request := httptest.NewRequest("POST", "/api/users/", body)
@@ -153,13 +166,16 @@ func TestLoginControllerFailed(t *testing.T) {
 	response, err := app.Test(request)
 	assert.Nil(t, err)
 
-	assert.Equal(t, 500, response.StatusCode)
+	assert.Equal(t, 400, response.StatusCode)
 
 }
 
 func TestFindAllControllerSuccess(t *testing.T) {
 
 	err := userRepo.Truncate(ctx, db)
+	assert.Nil(t, err)
+
+	err = roleRepo.Truncate(ctx, db)
 	assert.Nil(t, err)
 
 	err = whitelistRepo.Truncate(ctx, db)
@@ -193,10 +209,8 @@ func TestFindAllControllerSuccess(t *testing.T) {
 
 	//Get All User
 
-	for i := 1; i <= 3; i++ {
-		_, err := CreateUser(fmt.Sprintf("user_controller_test_%d", i))
-		assert.Nil(t, err)
-	}
+	_, err = CreateUserMany("user_test")
+	assert.Nil(t, err)
 
 	app.Get("/api/users/", userController.FindAll)
 	request1 := httptest.NewRequest("GET", "/api/users/", nil)
